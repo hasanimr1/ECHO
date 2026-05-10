@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-serif: "Lora", serif;
+  
+  --brand-color: #00F5FF;
+  --color-brand: var(--brand-color);
+  --color-brand-muted: color-mix(in srgb, var(--brand-color), transparent 90%);
+  --color-accent-red: #FF4500;
+  --color-background: #050505;
+  --color-surface: #090909;
+  --color-card: #0F0F0F;
+  --color-sidebar: #070707;
+  --color-border: #1F1F1F;
+  --color-muted: #666666;
+  --color-text-primary: #E0E0E0;
+  --color-text-secondary: #888888;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-transparent text-brand border border-brand text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-brand/10 active:scale-95 transition-all duration-300;
+  }
+  
+  .card {
+    @apply bg-card border border-border rounded-lg p-4 shadow-2xl;
+  }
+
+  .nav-input {
+    @apply bg-[#121212] border border-border rounded-md px-4 py-1.5 text-sm focus:outline-none focus:border-brand placeholder-[#444] transition-all duration-300;
+  }
+}
+
+* {
+  transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease, ring-color 0.3s ease;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

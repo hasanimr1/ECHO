@@ -1,0 +1,6 @@
+{
+  "name": "Echo",
+  "description": "A simplified, anonymous Reddit clone focusing on core community interactions: posting, commenting, and voting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
