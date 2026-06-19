@@ -33,34 +33,51 @@ const CARDS = [
 ];
 
 interface SplashScreenProps {
+  brandColor: string;
   onEnter: (mode: 'login' | 'signup') => void;
 }
 
-export default function SplashScreen({ onEnter }: SplashScreenProps) {
+export default function SplashScreen({ brandColor, onEnter }: SplashScreenProps) {
   const [index, setIndex] = useState(0);
 
   const nextCard = () => setIndex((prev) => (prev + 1) % CARDS.length);
   const prevCard = () => setIndex((prev) => (prev - 1 + CARDS.length) % CARDS.length);
 
+  // Convert hex color to RGB array for Dither
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+      parseInt(result[1], 16) / 255,
+      parseInt(result[2], 16) / 255,
+      parseInt(result[3], 16) / 255
+    ] : [0.0, 0.45, 0.55]; // fallback
+  };
+
+  const waveColor = hexToRgb(brandColor);
+
   return (
-    <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center overflow-y-auto">
       {/* Background Effect */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <Dither 
-          waveColor={[0.1, 0.5, 0.6]}
-          waveAmplitude={0.15}
-          waveFrequency={1.5}
-          pixelSize={2}
-          waveSpeed={0.03}
+      <div className="absolute inset-0 z-0 opacity-60">
+        <Dither
+          waveColor={waveColor}
+          disableAnimation={true}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={4}
+          waveAmplitude={0.3}
+          waveFrequency={4}
+          waveSpeed={0.5}
+          pixelSize={1}
         />
       </div>
 
-      <div className="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-4xl px-6 pt-12 pb-8 flex flex-col items-center">
         {/* Logo */}
-        <motion.div 
+        <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center gap-3 mb-12"
+          className="flex items-center gap-3 mb-6"
         >
           <div className="w-10 h-10 bg-brand rounded-sm flex items-center justify-center text-background">
             <div className="w-5 h-5 border-2 border-background rotate-45" />
@@ -69,23 +86,23 @@ export default function SplashScreen({ onEnter }: SplashScreenProps) {
         </motion.div>
 
         {/* Swipeable Cards Container */}
-        <div className="relative w-full max-w-sm flex items-center mb-8">
+        <div className="relative w-full max-w-xs flex items-center mb-5">
           {/* Desktop Navigation Buttons */}
-          <button 
+          <button
             onClick={prevCard}
             className="absolute -left-16 hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border bg-card/50 text-muted hover:text-brand hover:border-brand transition-all"
           >
             <ChevronLeft size={20} />
           </button>
 
-          <button 
+          <button
             onClick={nextCard}
             className="absolute -right-16 hidden md:flex w-10 h-10 items-center justify-center rounded-full border border-border bg-card/50 text-muted hover:text-brand hover:border-brand transition-all"
           >
             <ChevronRight size={20} />
           </button>
 
-          <div className="relative w-full aspect-[4/5] group">
+          <div className="relative w-full h-56 group">
             <AnimatePresence mode="wait">
               <motion.div
                 key={CARDS[index].id}
@@ -98,26 +115,26 @@ export default function SplashScreen({ onEnter }: SplashScreenProps) {
                   if (info.offset.x < -50) nextCard();
                   if (info.offset.x > 50) prevCard();
                 }}
-                className="absolute inset-0 bg-[#0F0F0F] border border-border rounded-2xl p-8 flex flex-col items-center text-center shadow-2xl cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 bg-[#0F0F0F] border border-border rounded-2xl p-5 flex flex-col items-center text-center shadow-2xl cursor-grab active:cursor-grabbing"
               >
                 {(() => {
                   const Icon = CARDS[index].icon;
                   return (
-                    <div className={`w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6 ${CARDS[index].color}`}>
-                      <Icon size={32} />
+                    <div className={`w-11 h-11 rounded-full bg-white/5 flex items-center justify-center mb-3 ${CARDS[index].color}`}>
+                      <Icon size={22} />
                     </div>
                   );
                 })()}
-                <h3 className="text-2xl font-serif italic text-white mb-4">{CARDS[index].title}</h3>
-                <p className="text-text-secondary text-sm leading-relaxed uppercase tracking-widest text-[11px]">
+                <h3 className="text-lg font-serif italic text-white mb-2">{CARDS[index].title}</h3>
+                <p className="text-text-secondary text-sm leading-relaxed uppercase tracking-widest text-[10px]">
                   {CARDS[index].description}
                 </p>
-                
+
                 <div className="mt-auto flex gap-1.5">
                   {CARDS.map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-1 rounded-full transition-all duration-300 ${i === index ? 'w-6 bg-brand' : 'w-2 bg-border'}`} 
+                    <div
+                      key={i}
+                      className={`h-1 rounded-full transition-all duration-300 ${i === index ? 'w-6 bg-brand' : 'w-2 bg-border'}`}
                     />
                   ))}
                 </div>
@@ -128,13 +145,13 @@ export default function SplashScreen({ onEnter }: SplashScreenProps) {
 
         {/* Action Buttons */}
         <div className="w-full flex flex-col gap-3">
-          <button 
+          <button
             onClick={() => onEnter('signup')}
             className="btn-primary w-full !py-4"
           >
             Join the Silence
           </button>
-          <button 
+          <button
             onClick={() => onEnter('login')}
             className="w-full py-4 text-xs font-bold uppercase tracking-[0.2em] text-muted hover:text-white transition-colors"
           >

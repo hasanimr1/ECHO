@@ -3,51 +3,49 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, MoreHorizontal } from "lucide-react";
+import { MessageSquare, Share2, MoreHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
-import { Post } from "../types";
+import { Post, Comment } from "../types";
 import CommentSection from "./CommentSection";
-
-// Mock comments for the demo
-const MOCK_COMMENTS = [
-  {
-    id: "c1",
-    author: "pixel_pusher",
-    content: "Absolutely agree. The 'Space Grotesk' font really helps with that tech-forward yet readable vibe.",
-    votes: 45,
-    createdAt: "1 hour ago",
-    replies: [
-      {
-        id: "c2",
-        author: "minimalist_bot",
-        content: "Less is indeed more. Glad to see Echo taking this direction.",
-        votes: 12,
-        createdAt: "30 mins ago"
-      }
-    ]
-  },
-  {
-    id: "c3",
-    author: "curious_cat",
-    content: "Will there be a dark mode soon? My eyes would appreciate the 'ecstatic' vibes even more in the dark.",
-    votes: 28,
-    createdAt: "45 mins ago"
-  }
-];
+import { fetchComments, createComment, votePost } from "../store";
+import { useSignalR } from "../useSignalR";
+import { useEffect } from "react";
 
 interface PostCardProps {
   post: Post;
-  key?: string | number;
+  currentUsername: string | null;
+  onNotificationCreated?: () => void;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, currentUsername, onNotificationCreated }: PostCardProps) {
   const [vote, setVote] = useState(0);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const connection = useSignalR();
 
-  const handleVote = (val: number) => {
-    if (vote === val) setVote(0);
-    else setVote(val);
+  useEffect(() => {
+    if (isCommentsOpen) fetchComments(post.id).then(setComments).catch(console.error);
+  }, [isCommentsOpen, post.id]);
+
+  useEffect(() => {
+    if (connection && isCommentsOpen) {
+      connection.invoke('JoinPost', post.id).catch(console.error);
+      const onNewComment = (comment: Comment) => setComments(prev => [comment, ...prev]);
+      connection.on('NewComment', onNewComment);
+      return () => {
+        connection.invoke('LeavePost', post.id).catch(console.error);
+        connection.off('NewComment', onNewComment);
+      };
+    }
+  }, [connection, isCommentsOpen, post.id]);
+
+  const handleVote = async (val: number) => {
+    setVote(val === vote ? 0 : val);
+    try { await votePost(post.id, val === 1 ? 'up' : 'down'); } catch {}
+  };
+
+  const handleNewComment = async (text: string) => {
+    try { await createComment(post.id, text); } catch {}
   };
 
   return (
@@ -111,7 +109,7 @@ export default function PostCard({ post }: PostCardProps) {
               }`}
             >
               <MessageSquare size={14} />
-              {post.commentCount} Comments
+              {comments.length} Comments
             </button>
             
             <button className="text-[11px] font-bold uppercase text-[#555] hover:text-brand flex items-center gap-2">
@@ -136,7 +134,12 @@ export default function PostCard({ post }: PostCardProps) {
             className="overflow-hidden bg-[#0C0C0C]/50 border-t border-border"
           >
             <div className="p-6">
-              <CommentSection comments={MOCK_COMMENTS} />
+              <CommentSection
+                postId={post.id}
+                comments={comments}
+                currentUsername={currentUsername}
+                onNewComment={handleNewComment}
+              />
             </div>
           </motion.div>
         )}
@@ -144,4 +147,3 @@ export default function PostCard({ post }: PostCardProps) {
     </motion.article>
   );
 }
-

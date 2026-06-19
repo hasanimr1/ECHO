@@ -91,7 +91,7 @@ void main() {
     mouseNDC.x *= resolution.x / resolution.y;
     float dist = length(uv - mouseNDC);
     float effect = 1.0 - smoothstep(0.0, mouseRadius, dist);
-    f -= 0.5 * effect;
+    f -= 1.5 * effect;
   }
   vec3 col = mix(vec3(0.0), waveColor, f);
   gl_FragColor = vec4(col, 1.0);
@@ -135,25 +135,27 @@ void mainImage(in vec4 inputColor, in vec2 uv, out vec4 outputColor) {
 `;
 
 class RetroEffectImpl extends Effect {
+  private _map: Map<string, THREE.Uniform<number>>;
+
   constructor() {
-    const uniforms = new Map([
+    const uniforms = new Map<string, THREE.Uniform<number>>([
       ['colorNum', new THREE.Uniform(4.0)],
       ['pixelSize', new THREE.Uniform(2.0)]
     ]);
     super('RetroEffect', ditherFragmentShader, { uniforms });
-    this.uniforms = uniforms;
+    this._map = uniforms;
   }
-  set colorNum(v) {
-    this.uniforms.get('colorNum').value = v;
+  set colorNum(v: number) {
+    this._map.get('colorNum')!.value = v;
   }
-  get colorNum() {
-    return this.uniforms.get('colorNum').value;
+  get colorNum(): number {
+    return this._map.get('colorNum')!.value;
   }
-  set pixelSize(v) {
-    this.uniforms.get('pixelSize').value = v;
+  set pixelSize(v: number) {
+    this._map.get('pixelSize')!.value = v;
   }
-  get pixelSize() {
-    return this.uniforms.get('pixelSize').value;
+  get pixelSize(): number {
+    return this._map.get('pixelSize')!.value;
   }
 }
 

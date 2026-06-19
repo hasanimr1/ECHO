@@ -13,12 +13,15 @@ interface NavbarProps {
   onNewPostOpen: () => void;
   onSettingsOpen: () => void;
   onAuthOpen: () => void;
-  onLogout: () => void;
+  onProfileOpen: () => void;
+  onNotificationsOpen: () => void;
+  onMessagesOpen: () => void;
+  unreadCount: number;
   userStatus: 'active' | 'inactive';
   user: UserType | null;
 }
 
-export default function Navbar({ onSearchOpen, onNewPostOpen, onSettingsOpen, onAuthOpen, onLogout, userStatus, user }: NavbarProps) {
+export default function Navbar({ onSearchOpen, onNewPostOpen, onSettingsOpen, onAuthOpen, onProfileOpen, onNotificationsOpen, onMessagesOpen, unreadCount, userStatus, user }: NavbarProps) {
   const dockItems: DockItemData[] = [
     { 
       icon: <Search size={18} />, 
@@ -26,14 +29,21 @@ export default function Navbar({ onSearchOpen, onNewPostOpen, onSettingsOpen, on
       onClick: onSearchOpen 
     },
     { 
-      icon: <Bell size={18} />, 
+      icon: (
+        <div className="relative">
+          <Bell size={18} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+          )}
+        </div>
+      ), 
       label: 'Notifications', 
-      onClick: () => {} 
+      onClick: onNotificationsOpen 
     },
     { 
       icon: <MessageSquare size={18} />, 
       label: 'Messages', 
-      onClick: () => {} 
+      onClick: onMessagesOpen 
     },
     { 
       icon: <Plus size={18} />, 
@@ -46,9 +56,9 @@ export default function Navbar({ onSearchOpen, onNewPostOpen, onSettingsOpen, on
       onClick: onSettingsOpen 
     },
     { 
-      icon: user ? <LogOut size={18} className="text-red-500" /> : <User size={18} />, 
-      label: user ? 'Logout' : 'Login', 
-      onClick: user ? onLogout : onAuthOpen 
+      icon: <User size={18} className={user ? "text-brand" : ""} />, 
+      label: user ? 'Profile' : 'Login', 
+      onClick: user ? onProfileOpen : onAuthOpen 
     },
   ];
 

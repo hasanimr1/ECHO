@@ -3,33 +3,55 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ArrowBigUp, ArrowBigDown, CornerDownRight } from "lucide-react";
+import { CornerDownRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Comment } from "../types";
 
 interface CommentSectionProps {
+  postId: string;
   comments: Comment[];
-  key?: string | number;
+  currentUsername: string | null;
+  onNewComment: (text: string) => void;
 }
 
-export default function CommentSection({ comments }: CommentSectionProps) {
+export default function CommentSection({ postId, comments, currentUsername, onNewComment }: CommentSectionProps) {
+  const [text, setText] = useState('');
+
+  const handleSubmit = () => {
+    const trimmed = text.trim();
+    if (!trimmed || !currentUsername) return;
+    onNewComment(trimmed);
+    setText('');
+  };
+
   return (
     <div className="flex flex-col gap-6 pl-4 border-l-2 border-border ml-2 mt-4 animate-in fade-in slide-in-from-top-1">
       {comments.map((comment) => (
         <CommentItem key={comment.id} comment={comment} />
       ))}
-      
+
       {/* Add Comment Input */}
       <div className="mt-4 flex gap-3">
-        <div className="w-8 h-8 bg-border rounded-full flex-shrink-0" />
+        <div className="w-8 h-8 bg-border rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-muted">
+          {currentUsername ? currentUsername.charAt(0).toUpperCase() : '?'}
+        </div>
         <div className="flex-1">
-          <textarea 
-            placeholder="Add a comment..."
-            className="w-full bg-[#121212] border border-border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-brand transition-all min-h-[80px] text-text-primary placeholder-[#444]"
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={currentUsername ? "Add a comment..." : "Log in to comment"}
+            disabled={!currentUsername}
+            className="w-full bg-[#121212] border border-border rounded-lg p-3 text-sm outline-none focus:ring-1 focus:ring-brand transition-all min-h-[80px] text-text-primary placeholder-[#444] disabled:opacity-40 disabled:cursor-not-allowed resize-none"
           />
           <div className="flex justify-end mt-2">
-            <button className="btn-primary text-[10px] py-1.5 h-auto">Comment</button>
+            <button
+              onClick={handleSubmit}
+              disabled={!currentUsername || !text.trim()}
+              className="btn-primary text-[10px] py-1.5 h-auto disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Comment
+            </button>
           </div>
         </div>
       </div>
@@ -39,7 +61,6 @@ export default function CommentSection({ comments }: CommentSectionProps) {
 
 interface CommentItemProps {
   comment: Comment;
-  key?: string | number;
 }
 
 function CommentItem({ comment }: CommentItemProps) {
