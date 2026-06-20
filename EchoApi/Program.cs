@@ -58,10 +58,11 @@ builder.Services.AddAuthorization();
 // SignalR
 builder.Services.AddSignalR();
 
-// CORS — allow the Vite dev server
+// CORS — allow the Vite dev server or live Vercel URL
+var frontendUrl = builder.Configuration["FrontendUrl"] ?? "http://localhost:5173";
 builder.Services.AddCors(opts =>
     opts.AddDefaultPolicy(p =>
-        p.WithOrigins("http://localhost:5173")
+        p.WithOrigins(frontendUrl)
          .AllowAnyHeader()
          .AllowAnyMethod()
          .AllowCredentials()
