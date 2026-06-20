@@ -5,11 +5,11 @@ namespace EchoApi.Data;
 
 public class EchoDbContext(DbContextOptions<EchoDbContext> options) : DbContext(options)
 {
-    public DbSet<AppUser> Users { get; set; }
-    public DbSet<Post> Posts { get; set; }
-    public DbSet<Comment> Comments { get; set; }
-    public DbSet<Vote> Votes { get; set; }
-    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<AppUser> Users { get; set; } = default!;
+    public DbSet<Post> Posts { get; set; } = default!;
+    public DbSet<Comment> Comments { get; set; } = default!;
+    public DbSet<Vote> Votes { get; set; } = default!;
+    public DbSet<Notification> Notifications { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -57,9 +57,9 @@ export default function Sidebar({ activeCategory, onCategorySelect }: SidebarPro
 
       {/* Footer Links */}
       <div className="px-4 py-2 flex flex-wrap gap-x-4 gap-y-2 text-[10px] uppercase font-bold tracking-widest text-muted">
-        <a href="#" className="hover:text-text-primary">Privacy</a>
-        <a href="#" className="hover:text-text-primary">Terms</a>
-        <a href="#" className="hover:text-text-primary">© 2025</a>
+        <a href="#" onClick={e => e.preventDefault()} className="hover:text-text-primary">Privacy</a>
+        <a href="#" onClick={e => e.preventDefault()} className="hover:text-text-primary">Terms</a>
+        <a href="#" onClick={e => e.preventDefault()} className="hover:text-text-primary">© 2025</a>
       </div>
     </aside>
   );

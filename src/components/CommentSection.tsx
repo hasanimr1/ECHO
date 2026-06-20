@@ -5,7 +5,7 @@
 
 import { CornerDownRight } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Comment } from "../types";
 
 interface CommentSectionProps {
@@ -15,7 +15,7 @@ interface CommentSectionProps {
   onNewComment: (text: string) => void;
 }
 
-export default function CommentSection({ postId, comments, currentUsername, onNewComment }: CommentSectionProps) {
+const CommentSection = React.memo(({ postId, comments, currentUsername, onNewComment }: CommentSectionProps) => {
   const [text, setText] = useState('');
 
   const handleSubmit = () => {
@@ -57,13 +57,15 @@ export default function CommentSection({ postId, comments, currentUsername, onNe
       </div>
     </div>
   );
-}
+});
+
+export default CommentSection;
 
 interface CommentItemProps {
   comment: Comment;
 }
 
-function CommentItem({ comment }: CommentItemProps) {
+const CommentItem = React.memo(({ comment }: CommentItemProps) => {
   const [vote, setVote] = useState(0);
 
   return (
@@ -112,4 +114,4 @@ function CommentItem({ comment }: CommentItemProps) {
       )}
     </div>
   );
-}
+});

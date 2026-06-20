@@ -5,12 +5,11 @@
 
 import { MessageSquare, Share2, MoreHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Post, Comment } from "../types";
 import CommentSection from "./CommentSection";
 import { fetchComments, createComment, votePost } from "../store";
 import { useSignalR } from "../useSignalR";
-import { useEffect } from "react";
 
 interface PostCardProps {
   post: Post;
@@ -18,10 +17,21 @@ interface PostCardProps {
   onNotificationCreated?: () => void;
 }
 
-export default function PostCard({ post, currentUsername, onNotificationCreated }: PostCardProps) {
+const PostCard = React.memo(({ post, currentUsername, onNotificationCreated }: PostCardProps) => {
   const [vote, setVote] = useState(0);
+  const [displayVotes, setDisplayVotes] = useState(post.votes);
+  const [displayCommentCount, setDisplayCommentCount] = useState(post.commentCount);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
   const connection = useSignalR();
+
+  useEffect(() => {
+    setDisplayVotes(post.votes);
+  }, [post.votes]);
+
+  useEffect(() => {
+    setDisplayCommentCount(post.commentCount);
+  }, [post.commentCount]);
 
   useEffect(() => {
     if (isCommentsOpen) fetchComments(post.id).then(setComments).catch(console.error);
@@ -39,13 +49,44 @@ export default function PostCard({ post, currentUsername, onNotificationCreated 
     }
   }, [connection, isCommentsOpen, post.id]);
 
-  const handleVote = async (val: number) => {
-    setVote(val === vote ? 0 : val);
-    try { await votePost(post.id, val === 1 ? 'up' : 'down'); } catch {}
+  const handleVote = async (newVote: number) => {
+    if (!currentUsername) {
+      if (document.querySelector('input[placeholder="Username"]')) {
+        const input = document.querySelector('input[placeholder="Username"]') as HTMLInputElement;
+        input.focus();
+      }
+      return;
+    }
+    
+    // Determine vote direction and optimistic update
+    let dir = 0;
+    if (vote === newVote) {
+      // Toggle off
+      dir = 0;
+      setDisplayVotes(prev => prev - vote);
+      setVote(0);
+    } else {
+      // Switch or brand new vote
+      dir = newVote;
+      const diff = newVote === 1 ? (vote === -1 ? 2 : 1) : (newVote === -1 ? (vote === 1 ? -2 : -1) : 0);
+      setDisplayVotes(prev => prev + diff);
+      setVote(newVote);
+    }
+
+    try {
+      await votePost(post.id, newVote === 1 ? 'up' : 'down');
+      if (dir === 1 && onNotificationCreated) onNotificationCreated();
+    } catch {}
   };
 
   const handleNewComment = async (text: string) => {
-    try { await createComment(post.id, text); } catch {}
+    setDisplayCommentCount(prev => prev + 1);
+    try { 
+      await createComment(post.id, text); 
+      if (onNotificationCreated) onNotificationCreated();
+    } catch (e) {
+      setDisplayCommentCount(prev => prev - 1); // Revert on failure
+    }
   };
 
   return (
@@ -67,7 +108,7 @@ export default function PostCard({ post, currentUsername, onNotificationCreated 
           </motion.button>
           
           <span className={`text-xs font-mono font-bold ${vote === 1 ? 'text-brand' : vote === -1 ? 'text-accent-red' : 'text-text-primary'}`}>
-            {(post.votes + vote).toLocaleString()}
+            {displayVotes.toLocaleString()}
           </span>
 
           <motion.button
@@ -109,7 +150,7 @@ export default function PostCard({ post, currentUsername, onNotificationCreated 
               }`}
             >
               <MessageSquare size={14} />
-              {comments.length} Comments
+              {displayCommentCount} Comments
             </button>
             
             <button className="text-[11px] font-bold uppercase text-[#555] hover:text-brand flex items-center gap-2">
@@ -146,4 +187,8 @@ export default function PostCard({ post, currentUsername, onNotificationCreated 
       </AnimatePresence>
     </motion.article>
   );
-}
+}, (prev, next) => {
+  return prev.post === next.post && prev.currentUsername === next.currentUsername;
+});
+
+export default PostCard;

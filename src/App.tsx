@@ -9,6 +9,7 @@ import PostCard from "./components/PostCard";
 import Sidebar from "./components/Sidebar";
 import { Post, User as UserType } from "./types";
 import { fetchPosts, createPost, fetchNotifications, fetchUnreadCount, markAllNotificationsRead, EchoNotification, updateUserDetails } from "./store";
+import { API_BASE } from "./api";
 import { useSignalR } from "./useSignalR";
 import { Search, Palette, Activity, Lock, User as UserIcon, Shield, Bell, MessageSquare, Eye, EyeOff, CheckCircle2, ArrowUp, ArrowDown, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -58,7 +59,7 @@ export default function App() {
   }, [connection, activeCategory]);
   const [activeOverlay, setActiveOverlay] = useState<'search' | 'newPost' | 'settings' | 'auth' | 'notifications' | 'messages' | 'profile' | null>(null);
   const [showSplash, setShowSplash] = useState(() => !localStorage.getItem('echo_user'));
-  const [brandColor, setBrandColor] = useState('#00F5FF');
+  const [brandColor, setBrandColor] = useState(() => localStorage.getItem('echo_theme') || '#00F5FF');
   const [userStatus, setUserStatus] = useState<'active' | 'inactive'>('active');
   const [user, setUser] = useState<UserType | null>(() => {
     const saved = localStorage.getItem('echo_user');
@@ -111,6 +112,7 @@ export default function App() {
 
   // Apply brand color to CSS variable
   useEffect(() => {
+    localStorage.setItem('echo_theme', brandColor);
     document.documentElement.style.setProperty('--brand-color', brandColor);
   }, [brandColor]);
 
@@ -145,7 +147,7 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+      const endpoint = authMode === 'login' ? `${API_BASE}/auth/login` : `${API_BASE}/auth/signup`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,9 +164,10 @@ export default function App() {
           setAuthForm({ username: authForm.username, password: '', displayName: '' });
           setShowPassword(false);
         } else {
-          // Login — set user and enter app
+          // Login — set user, store JWT token, and enter app
           setUser(data.user);
           localStorage.setItem('echo_user', JSON.stringify(data.user));
+          localStorage.setItem('echo_token_data', JSON.stringify({ token: data.token }));
           setActiveOverlay(null);
           setAuthForm({ username: '', password: '', displayName: '' });
         }
@@ -181,6 +184,7 @@ export default function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('echo_user');
+    localStorage.removeItem('echo_token_data');
     setShowSplash(true);
     setActiveOverlay(null);
   };
@@ -252,11 +256,12 @@ export default function App() {
         user={user}
       />
       
-      {/* Main content blurs when overlay is active */}
-      <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out ${activeOverlay ? 'blur-xl brightness-50 pointer-events-none scale-[0.98]' : ''}`}>
-        <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_288px] gap-8">
-          {/* Feed Section */}
-          <section className="flex flex-col gap-6">
+      {/* Main content blurs when overlay is active — and hidden if not logged in */}
+      {user ? (
+        <div className={`flex-1 flex flex-col transition-all duration-700 ease-in-out ${activeOverlay ? 'blur-xl brightness-50 pointer-events-none scale-[0.98]' : ''}`}>
+          <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_288px] gap-8">
+            {/* Feed Section */}
+            <section className="flex flex-col gap-6">
             
             {/* Feed Filter Pills */}
             <div className="flex items-center gap-3 mb-2 overflow-x-auto pb-2 no-scrollbar">
@@ -332,9 +337,22 @@ export default function App() {
           </section>
 
           {/* Sidebar Section */}
-          <Sidebar activeCategory={activeCategory} onCategorySelect={setActiveCategory} />
-        </main>
-      </div>
+            <Sidebar activeCategory={activeCategory} onCategorySelect={setActiveCategory} />
+          </main>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center bg-[#070707] relative overflow-hidden">
+          {/* Abstract locked background background */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand/20 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand/10 rounded-full blur-[120px] animate-pulse delay-700" />
+          </div>
+          <div className="relative z-10 text-center">
+            <Lock className="w-12 h-12 text-brand/20 mx-auto mb-4" />
+            <p className="text-[10px] uppercase tracking-[0.3em] text-muted font-bold">Access Restricted</p>
+          </div>
+        </div>
+      )}
 
       {/* Overlays */}
       <AnimatePresence>
@@ -343,7 +361,12 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setActiveOverlay(null)}
+            onClick={() => {
+              // Prevent closing the auth screen if user is not authenticated
+              if (user || activeOverlay !== 'auth') {
+                setActiveOverlay(null);
+              }
+            }}
             className="fixed inset-0 z-[100] flex items-start justify-center pt-24 bg-black/40 backdrop-blur-sm"
           >
             <motion.div
