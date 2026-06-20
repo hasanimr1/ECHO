@@ -15,6 +15,6 @@ COPY --from=build /app/publish .
 
 # Important for Render/Railway SQLite persistent storage to function properly
 RUN mkdir -p /data
-ENV DatabaseConnection="Data Source=/data/echo.db"
+ENV ConnectionStrings__DefaultConnection="Data Source=/data/echo.db"
 
 ENTRYPOINT ["dotnet", "EchoApi.dll"]
