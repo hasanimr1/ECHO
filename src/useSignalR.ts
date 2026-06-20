@@ -12,8 +12,10 @@ export function useSignalR() {
       token = data.token || "";
     } catch {}
 
+    const hubUrl = import.meta.env.VITE_HUB_URL || "http://localhost:5000/hubs/echo";
+
     connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:5000/hubs/echo", {
+      .withUrl(hubUrl, {
         accessTokenFactory: () => token
       })
       .withAutomaticReconnect()

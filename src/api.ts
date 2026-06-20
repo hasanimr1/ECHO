@@ -2,7 +2,7 @@
  * centralized API client for ECHO .NET Backend
  */
 
-export const API_BASE = "http://localhost:5000/api";
+export const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
 
 function getHeaders() {
   const userStr = localStorage.getItem("echo_user");
