@@ -13,9 +13,9 @@ public class AdminController(IConfiguration config) : ControllerBase
      * Required header: X-Admin-Key
      */
     [HttpGet("db-download")]
-    public IActionResult DownloadDatabase()
+    public IActionResult DownloadDatabase([FromQuery] string? key)
     {
-        var requestedKey = Request.Headers["X-Admin-Key"].ToString();
+        var requestedKey = key ?? Request.Headers["X-Admin-Key"].ToString();
         var secureKey = config["AdminKey"] ?? "echo-default-key-change-me";
 
         if (string.IsNullOrEmpty(requestedKey) || requestedKey != secureKey)
